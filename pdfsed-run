@@ -444,7 +444,7 @@ if __name__ == '__main__':
 
         elif cmd == 'set-author':
             author = args[0]
-            logging.info('Document autho: %s.', author)
+            logging.info('Document author: %s.', author)
             canvas.setAuthor(author)
 
         elif cmd == 'create-page':
