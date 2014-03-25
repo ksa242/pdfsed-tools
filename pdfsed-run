@@ -196,7 +196,7 @@ def _read_pdfsed_atom(buf):
             j += 1
             if buf[j] == '\\' and buf[j - 1] != '\\':
                 continue
-            elif buf[j] == '"' and buf[j - 1] != '"':
+            elif buf[j] == '"' and buf[j - 1] != '\\':
                 # End of string
                 break
             else:
@@ -266,9 +266,7 @@ def _create_page(canvas, page_num, width=0, height=0, rotation=0):
         if width <= 0 or height <= 0:
             raise ValueError('First page has to have width and height (in points).')
 
-    page_num += 1
-
-    info = 'Page %d' % (page_num, )
+    info = 'Page %d' % (page_num + 1, )
     if width > 0 and height > 0:
         info += ', size %d x %d pt' % (width, height)
     else:
@@ -279,10 +277,10 @@ def _create_page(canvas, page_num, width=0, height=0, rotation=0):
     if width > 0 and height > 0:
         canvas.setPageSize((width, height))
     canvas.setPageRotation(rotation)
-    return page_num
+    return page_num + 1
 
 
-def _draw_image(canvas, page_num, file_name, *args):
+def _draw_image(canvas, file_name, *args):
     logging.info('Drawing image %s.', file_name)
 
     image = PIL.Image.open(file_name)
@@ -323,7 +321,7 @@ def _draw_image(canvas, page_num, file_name, *args):
     return width, height
 
 
-def _draw_text(canvas, page_num, file_name, *args):
+def _draw_text(canvas, file_name, *args):
     logging.info('Drawing text from %s', file_name)
 
     page = {}
@@ -457,10 +455,10 @@ if __name__ == '__main__':
             page_num = _create_page(canvas, page_num, *args)
 
         elif cmd == 'draw-image':
-            _draw_image(canvas, page_num, *args)
+            _draw_image(canvas, *args)
 
         elif cmd == 'draw-text':
-            _draw_text(canvas, page_num, *args)
+            _draw_text(canvas, *args)
 
         else:
             logging.warn('Unknown command %s, arguments: %s', cmd, args)
