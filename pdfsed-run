@@ -303,7 +303,10 @@ def _draw_image(canvas, file_name, *args):
         elif arg == 'mask':
             mask = args[i + 1]
 
+    width, height = [round(v * 72.0 / dpi, 3) for v in (width, height)]
+
     logging.info('Resolution: %d dpi.', dpi)
+    logging.info('Size: %d x %d pt.', width, height)
     logging.info('Origin: %.3f x %.3f pt.', x, y)
 
     if mask >= 0:
@@ -311,7 +314,6 @@ def _draw_image(canvas, file_name, *args):
         r, g, b = (mask >> 16, (mask >> 8) & 0xff, mask & 0xff)
         mask = [r, r, g, g, b, b]
 
-    width, height = [round(v * 72.0 / dpi, 3) for v in (width, height)]
     canvas.drawImage(file_name, x, y,
                      width=width, height=height,
                      mask=mask,
@@ -427,7 +429,7 @@ if __name__ == '__main__':
                                   sys.argv[2], err.args[0])
                     sys.exit(1)
 
-    canvas = reportlab.pdfgen.canvas.Canvas(pdf_file, pageCompression=1)
+    canvas = reportlab.pdfgen.canvas.Canvas(pdf_file)
     canvas.setCreator('%s v%s' % (UTIL_NAME, UTIL_VERSION))
 
     _add_invisible_font(canvas)
