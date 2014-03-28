@@ -94,8 +94,8 @@ def guess_file_format(file_ext):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(stream=sys.stderr,
-                        format='%(levelname)s :%(name)s: %(message)s')
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO,
+                        format='%(levelname)s: %(name)s: %(message)s')
 
     debug = False
 

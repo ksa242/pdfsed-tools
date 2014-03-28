@@ -400,7 +400,7 @@ def _draw_text(canvas, file_name, *args):
 
 if __name__ == '__main__':
     logging.basicConfig(stream=sys.stderr, level=logging.INFO,
-                        format='%(levelname)s :%(name)s: %(message)s')
+                        format='%(levelname)s: %(name)s: %(message)s')
 
     script_file = sys.stdin
     pdf_file = sys.stdout
