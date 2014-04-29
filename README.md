@@ -48,6 +48,7 @@ overwise. Rotation angle is purely optional and is not inheritable.
  
 
     DRAW IMAGE "file-name" DPI dpi [POS x y] [MASK color]
+        [MASK-IMAGE "file-name"]
 
 Draws an image on the current page. First argument is the image file name,
 and is mandatory. Arguments are:
@@ -63,15 +64,23 @@ Image offset in points, defaults to (0, 0).
  
     MASK color
 
-Transparent color (mask) for the image (default: none). Use 0xRRGGBB hex
-number for readability, although a simple integer will do.
+Transparent color of the image (default: none). Use 0xRRGGBB hex number.
+ 
+    MASK-IMAGE "file-name"
+
+Monochrome mask image's file name (default: none).
  
 
     DRAW TEXT "file-name" [DPI dpi] [POS x y] [SCALE factor]
 
 Draws a hidden text on the current page. First argument is the text layout
 script file name, and is mandatory. Both hOCR (.hocr/.htm/.html) and djvused
-(.djvused) file types are supported. Optional arguments are:
+(.djvused) file types are supported.
+
+**PDFSED-RUN EXPECTS UTF-8 TEXT INPUT! RUSSIAN IS THE ONLY LANGUAGE
+SUPPORTED UNTIL THERE IS A WAY TO PUT PROPER UTF-8 INTO PDF USING LIBHARU!**
+
+Optional arguments are:
  
     DPI dpi
 
@@ -86,7 +95,7 @@ Text offset in points to match the OCRed image. Defaults to (0, 0).
     SCALE factor
 
 Layout file's scaling factor, defaults to 1.0 (no scaling).
-        
+
 
 If everything went well, you'll get a searchable PDF file out of your stack
 of OCRed images and text layouts. There is no need to run the PDF file
