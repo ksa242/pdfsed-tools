@@ -143,6 +143,11 @@ Dependencies
 
 The utilities require:
 
-*   [libHaru](http://www.libharu.org/) (tested with v2.2.1-r1);
+*   [libxml2](http://www.xmlsoft.org/) for hOCR parsing (tested with
+    v2.9.1-r1);
 
-*   [libxml2](http://www.xmlsoft.org/) (tested with v2.9.1-r1).
+*   [fontconfig](http://fontconfig.org/) for finding a suitable TrueType
+    font (tested with v2.10.92);
+
+*   [libHaru](http://www.libharu.org/) for PDF rendering (tested with
+    v2.2.1-r1);

@@ -1,7 +1,7 @@
 CROSS_COMPILE ?=
 CC ?= gcc
 CFLAGS ?= -O2
-CFLAGS_REQ = -std=c99 -D_POSIX_C_SOURCE=200101L -Wall `pkg-config --cflags --libs libxml-2.0` -lhpdf -lm
+CFLAGS_REQ = -std=c99 -D_POSIX_C_SOURCE=200101L -Wall `pkg-config --cflags --libs libxml-2.0 fontconfig` -lhpdf -lm
 
 all: pdfsed-conv pdfsed-run
 

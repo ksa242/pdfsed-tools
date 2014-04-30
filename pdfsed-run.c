@@ -8,6 +8,7 @@
 #include <string.h>
 #include <strings.h>
 
+#include <fontconfig/fontconfig.h>
 #include <hpdf.h>
 #include <iconv.h>
 
@@ -20,7 +21,7 @@
 
 void libharu_error_handler(HPDF_STATUS error_no, HPDF_STATUS detail_no, void *user_data)
 {
-    fprintf(stderr, "HPDF: errno = %04x, details = %d\n",
+    fprintf(stderr, "HPDF: errno = %04x, details = %d.\n",
             (unsigned int)error_no, (int)detail_no);
 }
 
@@ -67,7 +68,7 @@ char *extend_file_name(char *fn, const char *pwd)
 }
 
 
-void draw_text(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
+void draw_text(FILE *pdfsed_f, HPDF_Doc pdf, const char *font, const char *pwd)
 {
     enum pdfsed_atom prop = PDFSED_ATOM_UNKNOWN;
 
@@ -138,16 +139,16 @@ void draw_text(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
         }
     }
 
-    fprintf(stderr, "\tDPI %.2f\n", dpi);
-    fprintf(stderr, "\tOffset %.2f × %.2f pt\n", x, y);
-    fprintf(stderr, "\tScale %.2f%%\n", scale * 100.0);
+    fprintf(stderr, "\tDPI %.2f.\n", dpi);
+    fprintf(stderr, "\tOffset %.2f x %.2f pt.\n", x, y);
+    fprintf(stderr, "\tScale %.2f%%.\n", scale * 100.0);
 
     assert(HPDF_Page_BeginText(page) == HPDF_OK);
     assert(HPDF_Page_SetTextRenderingMode(page, HPDF_INVISIBLE) == HPDF_OK);
     assert(HPDF_Page_SetFontAndSize(
         page,
-        HPDF_GetFont(pdf, PDFSED_INVISIBLE_FONT, "CP1251"),
-        PDFSED_INVISIBLE_FONT_SIZE
+        HPDF_GetFont(pdf, font, "CP1251"),
+        PDFSED_DEFAULT_FONT_SIZE
     ) == HPDF_OK);
 
     column = (struct node *)txt->content;
@@ -271,9 +272,9 @@ void draw_image(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
     w = 72 * (HPDF_Image_GetWidth(img) / dpi);
     h = 72 * (HPDF_Image_GetHeight(img) / dpi);
 
-    fprintf(stderr, "\tDPI %.2f\n", dpi);
-    fprintf(stderr, "\tOffset %.2f × %.2f pt\n", x, y);
-    fprintf(stderr, "\tSize: %.2f × %.2f pt\n", w, h);
+    fprintf(stderr, "\tDPI %.2f.\n", dpi);
+    fprintf(stderr, "\tOffset %.2f x %.2f pt.\n", x, y);
+    fprintf(stderr, "\tSize: %.2f x %.2f pt.\n", w, h);
 
     if (smask != NULL) {
         fprintf(stderr, "\tMasking the image with %s.\n", smask_fn);
@@ -282,7 +283,7 @@ void draw_image(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
     } else if (mask >= 0) {
         HPDF_UINT r, g, b;
 
-        fprintf(stderr, "\tMask: %06lx\n", mask);
+        fprintf(stderr, "\tMask: 0x%06lx.\n", mask);
 
         r = mask >> 16;
         g = (mask >> 8) & 0xff;
@@ -350,11 +351,11 @@ void create_page(FILE *pdfsed_f, HPDF_Doc pdf)
 
     assert(w > 0 && h > 0);
 
-    fprintf(stderr, "\tSize %.2f × %.2f pt\n", w, h);
+    fprintf(stderr, "\tSize %.2f x %.2f pt.\n", w, h);
     assert(HPDF_Page_SetWidth(new_page, w) == HPDF_OK);
     assert(HPDF_Page_SetHeight(new_page, h) == HPDF_OK);
 
-    fprintf(stderr, "\tRotation %.2f°\n", angle);
+    fprintf(stderr, "\tRotation %.2f°.\n", angle);
     assert(HPDF_Page_SetRotate(new_page, angle) == HPDF_OK);
 }
 
@@ -383,13 +384,13 @@ void set_doc_prop(FILE *pdfsed_f, HPDF_Doc pdf)
         value = pdfsed_read_str(pdfsed_f);
 
         if (obj == PDFSED_ATOM_OBJ_TITLE) {
-            fprintf(stderr, "\tTitle: %s\n", value);
+            fprintf(stderr, "\tTitle: %s.\n", value);
             type = HPDF_INFO_TITLE;
         } else if (obj == PDFSED_ATOM_OBJ_AUTHOR) {
-            fprintf(stderr, "\tAuthor: %s\n", value);
+            fprintf(stderr, "\tAuthor: %s.\n", value);
             type = HPDF_INFO_AUTHOR;
         } else if (obj == PDFSED_ATOM_OBJ_CREATOR) {
-            fprintf(stderr, "\tCreator: %s\n", value);
+            fprintf(stderr, "\tCreator: %s.\n", value);
             type = HPDF_INFO_CREATOR;
         }
 
@@ -509,11 +510,32 @@ int main(int argc, char *argv[])
     }
 
     if (result == 0) {
+        FcConfig *fc_cfg = NULL;
+        FcPattern *fc_pat = NULL;
+        FcResult fc_res = FcResultMatch;
+        FcPattern *fc_fnt = NULL;
+        FcChar8 *fc_fnt_fn = NULL;
+
         HPDF_Doc pdf = NULL;
+        char *font = NULL;
 
         char *pwd = NULL;
 
         enum pdfsed_atom cmd = PDFSED_ATOM_UNKNOWN;
+
+        /* Find a TrueType sans serif font to use. */
+        fc_cfg = FcInitLoadConfigAndFonts();
+
+        fc_pat = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, "sans-serif",
+                                      FC_FONTFORMAT, FcTypeString, "TrueType",
+                                      NULL);
+        assert(FcConfigSubstitute(fc_cfg, fc_pat, FcMatchPattern) == FcTrue);
+        FcDefaultSubstitute(fc_pat);
+                              
+        fc_fnt = FcFontMatch(fc_cfg, fc_pat, &fc_res);
+        assert(fc_res == FcResultMatch);
+        assert(fc_fnt != NULL);
+        assert(FcPatternGetString(fc_fnt, FC_FILE, 0, &fc_fnt_fn) == FcResultMatch);
 
         fprintf(stderr, "Reading pdfsed script from %s.\n",
                 (cfg->pdfsed_fn != NULL) ? cfg->pdfsed_fn : "stdin");
@@ -532,6 +554,18 @@ int main(int argc, char *argv[])
         assert(HPDF_SetCompressionMode(pdf, HPDF_COMP_ALL) == HPDF_OK);
         assert(HPDF_SetInfoAttr(pdf, HPDF_INFO_PRODUCER, PDFSED_RUN_NAME) == HPDF_OK);
         assert(HPDF_SetCurrentEncoder(pdf, "CP1251") == HPDF_OK);
+
+        fprintf(stderr, "Loading font %s.\n", (char *)fc_fnt_fn);
+        font = (char *)HPDF_LoadTTFontFromFile(pdf, (char *)fc_fnt_fn, HPDF_TRUE);
+        fprintf(stderr, "Got font %s.\n", font);
+
+        fc_fnt_fn = NULL;
+        FcPatternDestroy(fc_fnt);
+        fc_fnt = NULL;
+        FcPatternDestroy(fc_pat);
+        fc_pat = NULL;
+        FcConfigDestroy(fc_cfg);
+        fc_cfg = NULL;
 
         while (1) {
             cmd = pdfsed_read_atom(cfg->pdfsed_f);
@@ -553,13 +587,15 @@ int main(int argc, char *argv[])
                 if (obj == PDFSED_ATOM_OBJ_IMAGE) {
                     draw_image(cfg->pdfsed_f, pdf, pwd);
                 } else {
-                    draw_text(cfg->pdfsed_f, pdf, pwd);
+                    draw_text(cfg->pdfsed_f, pdf, font, pwd);
                 }
 
             } else {
-                fprintf(stderr, "\nUnknown pdfsed command.\n");
+                fprintf(stderr, "\nUnknown command.\n");
             }
         }
+
+        font = NULL;
 
         if (pdf != NULL && HPDF_GetCurrentPage(pdf) != NULL) {
             HPDF_STATUS err = HPDF_SaveToStream(pdf);
@@ -585,7 +621,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                fprintf(stderr, "\nGot %d bytes from the PDF buffer, saving...\n",
+                fprintf(stderr, "\nSaving %d bytes from the PDF buffer.\n",
                         received);
 
                 while (saved < pdf_buf_len) {

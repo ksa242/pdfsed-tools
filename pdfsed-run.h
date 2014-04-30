@@ -7,8 +7,7 @@
 #define PDFSED_RUN_NAME    "pdfsed-run"
 #define PDFSED_RUN_VERSION "0.1.0"
 
-#define PDFSED_INVISIBLE_FONT      "Helvetica"
-#define PDFSED_INVISIBLE_FONT_SIZE 8
+#define PDFSED_DEFAULT_FONT_SIZE 8
 
 
 struct pdfsed_run_cfg
