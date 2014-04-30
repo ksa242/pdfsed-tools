@@ -47,7 +47,7 @@ size present, all consecutive pages will inherit the size until told
 overwise. Rotation angle is purely optional and is not inheritable.
  
 
-    DRAW IMAGE "file-name" DPI dpi [POS x y] [MASK color]
+    DRAW IMAGE "file-name" [DPI dpi] [POS x y] [MASK color]
         [MASK-IMAGE "file-name"]
 
 Draws an image on the current page. First argument is the image file name,
@@ -56,7 +56,8 @@ and is mandatory. Arguments are:
     DPI dpi
 
 Image DPI; pdfsed-run can't detect the actual image DPI yet, so this
-argument is mandatory.
+argument is mandatory unless you want the image to be scaled to match the
+page size.
  
     POS x y
 

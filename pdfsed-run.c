@@ -195,7 +195,7 @@ void draw_image(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
     enum pdfsed_atom prop = PDFSED_ATOM_UNKNOWN;
 
     HPDF_Page page = NULL;
-    HPDF_REAL x = 0, y = 0, w = 0, h = 0, dpi = PDFSED_DEFAULT_DPI;
+    HPDF_REAL x, y, w, h, dpi;
     long mask = -1;
 
     HPDF_Image img = NULL;
@@ -223,6 +223,12 @@ void draw_image(FILE *pdfsed_f, HPDF_Doc pdf, const char *pwd)
     }
 
     assert(img != NULL);
+
+    x = 0.0;
+    y = 0.0;
+    w = 0.0;
+    h = 0.0;
+    dpi = round(HPDF_Image_GetWidth(img) / (HPDF_Page_GetWidth(page) / 72));
 
     while (1) {
         prop = pdfsed_read_atom(pdfsed_f);

@@ -7,8 +7,6 @@
 #define PDFSED_RUN_NAME    "pdfsed-run"
 #define PDFSED_RUN_VERSION "0.1.0"
 
-#define PDFSED_DEFAULT_DPI 72.0
-
 #define PDFSED_INVISIBLE_FONT      "Helvetica"
 #define PDFSED_INVISIBLE_FONT_SIZE 8
 
