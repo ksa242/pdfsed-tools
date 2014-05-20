@@ -134,6 +134,13 @@ guessed from input/output file name.  Plain text format is for output only!
 Scale the coordinates uniformly by the FACTOR (default: 1.0).  The factor
 will be rounded to three decimal digits.
 
+    -x OFFSET
+    -y OFFSET
+
+Offset the bounding boxes' coordinates, horizontally or vertically, by a
+number of pixels.  May be negative.  Remember: the coordinates start in the
+bottom left corner.
+
 
 Requirements
 ============
@@ -144,4 +151,4 @@ Python v2.7 with the following modules:
 
 *   [PIL](https://pypi.python.org/pypi/PIL) or [Pillow](https://pypi.python.org/pypi/Pillow) imaging module (tested with Pillow v2.0.0).
 
-Please keep in mind that further versions will be rewritten to Python 3!
+The future versions will probably be rewritten to Python 3.
