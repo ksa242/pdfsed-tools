@@ -28,7 +28,7 @@
 
 """OCR layout utility functions."""
 
-def recalculate_bbox(page, scale_factor=1.0):
+def recalculate_bbox(page, scale_factor=1.0, offset=None):
     """Recalculate bounding boxes' coordinates.
 
     Completely recalculates bounding boxes' coordinates for all lines,
@@ -38,6 +38,9 @@ def recalculate_bbox(page, scale_factor=1.0):
     """
     if scale_factor < 0.001:
         raise ValueError('Scale factor should be a positive, non-zero number.')
+
+    if not hasattr(offset, '__iter__') or len(offset) != 2:
+        offset = (0, 0)
 
     page_bbox = [round(v * scale_factor) for v in page['bbox']]
     page_width = page_bbox[2]
@@ -54,6 +57,11 @@ def recalculate_bbox(page, scale_factor=1.0):
 
                 for word in line['content']:
                     word_bbox = [round(v * scale_factor) for v in word['bbox']]
+                    word_bbox[0] += offset[0]
+                    word_bbox[1] += offset[1]
+                    word_bbox[2] += offset[0]
+                    word_bbox[3] += offset[1]
+
                     word['bbox'] = tuple(word_bbox)
 
                     line_bbox[0] = min(line_bbox[0], word_bbox[0])

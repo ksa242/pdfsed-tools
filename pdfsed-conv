@@ -58,6 +58,11 @@ Available options are:
  
         Scale the coordinates uniformly by the FACTOR (default: 1.0).
         The factor will be rounded to three decimal digits.
+
+    -x X-OFFSET
+    -y Y-OFFSET
+
+        Offsets to correct the bbox coordinates with. May be negative.
 """
 
 import logging
@@ -72,7 +77,7 @@ import pdfsed.txt
 
 
 UTIL_NAME = 'pdfsed-conv'
-UTIL_VERSION = '0.0.1'
+UTIL_VERSION = '0.0.2'
 
 
 def print_usage_help():
@@ -108,8 +113,10 @@ if __name__ == '__main__':
     output_format = ''
 
     scale_factor = 1.00
+    offset_x = 0
+    offset_y = 0
 
-    opts, args = getopt(sys.argv[1:], '?hvi:o:f:t:s:', (
+    opts, args = getopt(sys.argv[1:], '?hvi:o:f:t:s:x:y:', (
         'help',
         'verbose',
         'input=',
@@ -152,6 +159,10 @@ if __name__ == '__main__':
             except ValueError:
                 logging.error('Invalid scale factor: positive non-zero float number expected, got %s', val)
                 sys.exit(1)
+        elif opt == '-x':
+            offset_x = int(val, 10)
+        elif opt == '-y':
+            offset_y = int(val, 10)
 
     if not input_format:
         if not input_file_name:
@@ -187,7 +198,11 @@ if __name__ == '__main__':
             pdfsed.txt.save
     try:
         page = loader(input_file)
-        saver(pdfsed.recalculate_bbox(page, scale_factor), output_file)
+        saver(pdfsed.recalculate_bbox(
+            page,
+            scale_factor,
+            offset=(offset_x, offset_y)
+        ), output_file)
     except ValueError as err:
         result = 1
         if debug:

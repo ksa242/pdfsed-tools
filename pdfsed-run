@@ -124,11 +124,7 @@ OCRed images and text layouts.  It is recommended to run the PDF file through
 an optimizer like QPDF, as reportlab's compression handling is not that good.
 """
 
-import base64
-import logging
-import re
-import sys
-import zlib
+import base64, logging, re, zlib
 from StringIO import StringIO
 
 import reportlab.pdfgen.canvas
@@ -142,7 +138,7 @@ import pdfsed.djvused
 
 
 UTIL_NAME = 'pdfsed-run'
-UTIL_VERSION = '0.0.1'
+UTIL_VERSION = '0.0.2'
 
 PDFSED_INT_PATTERN = re.compile(r'^\d+$')
 PDFSED_HEXINT_PATTERN = re.compile(r'^0x[a-f\d]+$', re.IGNORECASE)
@@ -152,7 +148,7 @@ WHITESPACES = ' \t\r\n'
 
 DEFAULT_DPI = 72
 
-INVISIBLE_FONT_SIZE = 10
+INVISIBLE_FONT_SIZE = 8
 INVISIBLE_FONT_NAME = 'Invisible'
 INVISIBLE_FONT_FILE = StringIO(zlib.decompress(base64.decodestring("""
 eJzdlk1sG0UUx/+zs3btNEmrUKpCPxikSqRS4jpfFURUagmkEQQoiRXgAl07Y3vL2mvt2ml8APXG
@@ -261,10 +257,9 @@ def _create_page(canvas, page_num, width=0, height=0, rotation=0):
     if page_num > 0:
         # Render previous page.
         canvas.showPage()
-    else:
+    elif width <= 0 or height <= 0:
         # First page has to have width and height.
-        if width <= 0 or height <= 0:
-            raise ValueError('First page has to have width and height (in points).')
+        raise ValueError('First page has to have width and height (in points).')
 
     info = 'Page %d' % (page_num + 1, )
     if width > 0 and height > 0:
@@ -276,25 +271,27 @@ def _create_page(canvas, page_num, width=0, height=0, rotation=0):
 
     if width > 0 and height > 0:
         canvas.setPageSize((width, height))
+
     canvas.setPageRotation(rotation)
+
     return page_num + 1
 
 
 def _draw_image(canvas, file_name, *args):
     logging.info('Drawing image %s.', file_name)
 
+    dpi = DEFAULT_DPI
+    x = y = 0.0
+    mask = None
+
     image = PIL.Image.open(file_name)
     width, height = image.size
     try:
         dpi = image.info['dpi'][0]
     except KeyError:
-        dpi = DEFAULT_DPI
-        logging.warn('Could not determine %s DPI, assume %d dpi.',
-                     file_name, dpi)
+        logging.warn('Could not determine %s DPI.', file_name)
     del image
 
-    x = y = 0.0
-    mask = None
     for i, arg in enumerate(args):
         if arg == 'dpi':
             dpi = args[i + 1]
@@ -309,7 +306,7 @@ def _draw_image(canvas, file_name, *args):
     logging.info('Size: %d x %d pt.', width, height)
     logging.info('Origin: %.3f x %.3f pt.', x, y)
 
-    if mask >= 0:
+    if mask is not None:
         logging.info('Transparent color (mask): #%06x (RGB).', mask)
         r, g, b = (mask >> 16, (mask >> 8) & 0xff, mask & 0xff)
         mask = [r, r, g, g, b, b]
@@ -399,9 +396,12 @@ def _draw_text(canvas, file_name, *args):
 
 
 if __name__ == '__main__':
+    import os, sys
+
     logging.basicConfig(stream=sys.stderr, level=logging.INFO,
                         format='%(levelname)s: %(name)s: %(message)s')
 
+    working_path = os.path.curdir
     script_file = sys.stdin
     pdf_file = sys.stdout
 
@@ -419,6 +419,8 @@ if __name__ == '__main__':
                 logging.error('Failed opening script file %s: %s',
                               sys.argv[1], err.args[0])
                 sys.exit(1)
+            else:
+                working_path = os.path.dirname(sys.argv[1]) or os.path.curdir
 
         if len(sys.argv) > 2:
             if sys.argv[2] != '-':
@@ -429,7 +431,7 @@ if __name__ == '__main__':
                                   sys.argv[2], err.args[0])
                     sys.exit(1)
 
-    canvas = reportlab.pdfgen.canvas.Canvas(pdf_file)
+    canvas = reportlab.pdfgen.canvas.Canvas(pdf_file, pageCompression=True)
     canvas.setCreator('%s v%s' % (UTIL_NAME, UTIL_VERSION))
 
     _add_invisible_font(canvas)
@@ -457,9 +459,21 @@ if __name__ == '__main__':
             page_num = _create_page(canvas, page_num, *args)
 
         elif cmd == 'draw-image':
+            if len(args) < 1:
+                raise ValueError('Image file name is required.')
+
+            if not args[0].startswith(os.path.sep):
+                args[0] = os.path.join(working_path, args[0])
+
             _draw_image(canvas, *args)
 
         elif cmd == 'draw-text':
+            if len(args) < 1:
+                raise ValueError('Text file name is required.')
+
+            if not args[0].startswith(os.path.sep):
+                args[0] = os.path.join(working_path, args[0])
+
             _draw_text(canvas, *args)
 
         else:
